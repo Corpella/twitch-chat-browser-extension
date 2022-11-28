@@ -12,7 +12,6 @@ export const useChatHistory = () => {
     //     );
 
     //     const globalEmotes = await response.json()
-    //     console.log(globalEmotes);
     // };
 
     const state = reactive({
@@ -33,11 +32,7 @@ export const useChatHistory = () => {
 
     const getMessages = async (days = 2) => {
         const response = await fetch(`${import.meta.env.VITE_SERVER_URL}/chat/${days}`)
-
-
-
         messages.value = await response.json()
-        console.log({ response, messages: messages.value });
     }
 
     const parseMessage = (text: string) => {
