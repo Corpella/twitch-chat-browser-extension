@@ -6,12 +6,20 @@
     "src/**/*.vue"
   ],
   "compilerOptions": {
+    "target": "esnext",
+    "module": "esnext",
     "baseUrl": ".",
     "paths": {
       "@/*": [
         "./src/*"
       ]
-    }
+    },
+    "lib": [
+      "esnext",
+      "dom",
+      "dom.iterable",
+      "scripthost"
+    ]
   },
   "references": [
     {
