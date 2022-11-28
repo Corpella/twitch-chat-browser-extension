@@ -1,5 +1,7 @@
-<script setup lang="ts"></script>
+<script setup lang="ts">
+import Popup from "./views/Popup.vue"
+</script>
 
-<template>Test</template>
-
-<style scoped></style>
+<template>
+    <Popup />
+</template>
