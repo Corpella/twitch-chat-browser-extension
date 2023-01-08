@@ -57,8 +57,8 @@ init(currentChannel.value)
                         :style="{ color: color || '#7878ff' }"
                         >{{ name }}</span
                     >
-                    <span class="my-auto pr-1 font-bold">{{ ":" }}</span>
-                    <span class="text-white" v-html="parseMessage(message)" />
+                    <span class="my-auto pr-1 align-middle font-bold text-white">{{ ":" }}</span>
+                    <span class="align-middle text-white" v-html="parseMessage(message)" />
                 </li>
             </ul>
         </main>
