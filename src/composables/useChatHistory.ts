@@ -1,43 +1,69 @@
-import { nextTick, reactive, ref } from "vue";
+import { computed, nextTick, reactive, ref } from "vue";
+
+import { get } from "@/axios/axios";
 
 import type { Emote } from "@/types/emote";
 import type { ChatMessage } from "@/types/message";
 
+
 export const useChatHistory = () => {
-
-    //TODO: implement in the future
-    // const getGlobalEmotes = async () => {
-    //     const response = await fetch(
-    //         "https://emotes.adamcy.pl/v1/global/emotes/twitch"
-    //     );
-
-    //     const globalEmotes = await response.json()
-    // };
 
     const state = reactive({
         isLoading: false,
         error: false
     })
 
-    const localEmotes = ref<Emote[]>([]);
+    const channels = import.meta.env.VITE_CHANNEL_NAMES.split(",") as string[]
 
-    const getLocalEmotes = async () => {
-        const response = await fetch(
-            `https://emotes.adamcy.pl/v1/channel/${import.meta.env.VITE_CHANNEL_NAME}/emotes/twitch`
-        );
-        localEmotes.value = await response.json()
+    const currentChannel = ref(channels[0])
+
+    const emotes = reactive<Record<string, Emote[]>>({});
+
+    const allEmotes = computed(() => Object.values(emotes))
+
+    const messages = reactive<Record<string, ChatMessage[]>>({})
+
+    const currentMessages = computed(() => messages[currentChannel.value] ?? [])
+
+    const getGlobalEmotes = async () => {
+        if (emotes.global?.length) return
+
+        const { response, error } = await get<Emote[]>("https://emotes.adamcy.pl/v1/global/emotes/twitch")
+
+        if (error || !response) {
+            throw (error)
+        }
+
+        emotes.global = response
+    };
+
+    const getLocalEmotes = async (channel: string) => {
+        if (emotes[channel]?.length) return
+
+        const { response, error } = await get<Emote[]>(`https://emotes.adamcy.pl/v1/channel/${channel}/emotes/twitch`)
+
+        if (error || !response) {
+            throw (error)
+        }
+
+        emotes[channel] = response
     }
 
-    const messages = ref<ChatMessage[]>([])
 
-    const getMessages = async (days = 2) => {
-        const response = await fetch(`${import.meta.env.VITE_SERVER_URL}/chat/${days}`)
-        messages.value = await response.json()
+    const getMessages = async (channel: string, days = 2) => {
+
+        const { response, error } = await get<ChatMessage[]>(`${import.meta.env.VITE_SERVER_URL}/chat/${channel}/${days}`)
+
+        if (error || !response) {
+            throw (error)
+        }
+
+        messages[channel] = response
     }
 
-    const parseMessage = (text: string) => {
+    const parseMessage = (text: string, channel: string) => {
         let updatedText = text
-        localEmotes.value.forEach(({ code, urls }) => {
+        emotes[channel].forEach(({ code, urls }) => {
             if (updatedText.includes(code)) {
                 updatedText = updatedText.replaceAll(code, ` <div class="inline-block align-middle my-auto"><img class="w-8 h-8" src="${urls[0].url}"> </div>`)
             }
@@ -45,34 +71,42 @@ export const useChatHistory = () => {
         return updatedText
     }
 
-    const init = async () => {
-        state.isLoading = true
+    const init = async (channel: string) => {
+        !messages[channel]?.length && (state.isLoading = true)
 
         try {
-            await getLocalEmotes()
-            await getMessages()
+            await getGlobalEmotes()
+            await getLocalEmotes(channel)
+            await getMessages(channel)
         }
         catch (error) {
             state.error = true
         }
         finally {
             state.isLoading = false
+            nextTick(() => {
+                window.scrollTo(0, document.body.scrollHeight);
+            })
         }
-        nextTick(() => {
-            window.scrollTo(0, document.body.scrollHeight);
-        })
 
+    }
+
+    const setCurrentChannel = (channel: string) => {
+        currentChannel.value = channel
+        init(channel)
     }
 
 
     return {
-        localEmotes,
-        getLocalEmotes,
-        messages,
-        getMessages,
-        parseMessage,
         state,
-        init
+        channels,
+        currentChannel,
+        setCurrentChannel,
+        getMessages,
+        messages,
+        currentMessages,
+        parseMessage,
+        allEmotes,
+        init,
     }
-};
-
+}
