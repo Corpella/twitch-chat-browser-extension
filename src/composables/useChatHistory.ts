@@ -2,9 +2,10 @@ import { computed, nextTick, reactive, ref } from "vue";
 
 import { get } from "@/axios/axios";
 
-import type { Emote } from "@/types/emote";
-import type { ChatMessage } from "@/types/message";
+import type { Emote, RawEmote } from "~/emote";
+import type { ChatMessage } from "~/message";
 
+const cleanEmoteCode = ({ code, urls }: RawEmote): Emote => ({ code: code.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&'), url: urls[0].url })
 
 export const useChatHistory = () => {
 
@@ -28,29 +29,28 @@ export const useChatHistory = () => {
     const getGlobalEmotes = async () => {
         if (emotes.global?.length) return
 
-        const { response, error } = await get<Emote[]>("https://emotes.adamcy.pl/v1/global/emotes/twitch")
+        const { response, error } = await get<RawEmote[]>("https://emotes.adamcy.pl/v1/global/emotes/twitch")
 
         if (error || !response) {
             throw (error)
         }
-        emotes.global = response
+        emotes.global = response.map(cleanEmoteCode)
     };
 
     const getLocalEmotes = async (channel: string) => {
         if (emotes[channel]?.length) return
 
-        const { response, error } = await get<Emote[]>(`https://emotes.adamcy.pl/v1/channel/${channel}/emotes/twitch`)
+        const { response, error } = await get<RawEmote[]>(`https://emotes.adamcy.pl/v1/channel/${channel}/emotes/twitch`)
 
         if (error || !response) {
             throw (error)
         }
 
-        emotes[channel] = response
+        emotes[channel] = response.map(cleanEmoteCode)
     }
 
 
     const getMessages = async (channel: string, days = 2) => {
-
         const { response, error } = await get<ChatMessage[]>(`${import.meta.env.VITE_SERVER_URL}/chat/${channel}/${days}`)
 
         if (error || !response) {
@@ -62,13 +62,11 @@ export const useChatHistory = () => {
 
     const parseMessage = (text: string) => {
         let updatedText = text
-        allEmotes.value.forEach(({ code, urls }) => {
-            const cleanCode = code.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
+        allEmotes.value.forEach(({ code, url }) => {
+            const pattern = new RegExp(`\\b${code}\\b`, 'g')
 
-            const regexMatch = new RegExp("\\b" + cleanCode + "\\b", 'g')
-
-            if (updatedText.includes(code)) {
-                updatedText = updatedText.replaceAll(regexMatch, ` <span class="inline-block align-middle my-auto"><img class="w-8 h-8" src="${urls[0].url}"> </span>`)
+            if (updatedText.match(pattern)) {
+                updatedText = updatedText.replaceAll(pattern, ` <span class="inline-block align-middle my-auto"><img class="w-8 h-8" src="${url}"> </span>`)
             }
         })
         return updatedText
@@ -76,7 +74,6 @@ export const useChatHistory = () => {
 
     const init = async (channel: string) => {
         !messages[channel]?.length && (state.isLoading = true)
-
         try {
             await getGlobalEmotes()
             await getLocalEmotes(channel)
