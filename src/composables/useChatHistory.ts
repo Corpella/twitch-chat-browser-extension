@@ -19,7 +19,7 @@ export const useChatHistory = () => {
 
     const emotes = reactive<Record<string, Emote[]>>({});
 
-    const allEmotes = computed(() => Object.values(emotes))
+    const allEmotes = computed(() => Object.values(emotes).flat())
 
     const messages = reactive<Record<string, ChatMessage[]>>({})
 
@@ -33,7 +33,6 @@ export const useChatHistory = () => {
         if (error || !response) {
             throw (error)
         }
-
         emotes.global = response
     };
 
@@ -61,11 +60,15 @@ export const useChatHistory = () => {
         messages[channel] = response
     }
 
-    const parseMessage = (text: string, channel: string) => {
+    const parseMessage = (text: string) => {
         let updatedText = text
-        emotes[channel].forEach(({ code, urls }) => {
+        allEmotes.value.forEach(({ code, urls }) => {
+            const cleanCode = code.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
+
+            const regexMatch = new RegExp("\\b" + cleanCode + "\\b", 'g')
+
             if (updatedText.includes(code)) {
-                updatedText = updatedText.replaceAll(code, ` <div class="inline-block align-middle my-auto"><img class="w-8 h-8" src="${urls[0].url}"> </div>`)
+                updatedText = updatedText.replaceAll(regexMatch, ` <span class="inline-block align-middle my-auto"><img class="w-8 h-8" src="${urls[0].url}"> </span>`)
             }
         })
         return updatedText
