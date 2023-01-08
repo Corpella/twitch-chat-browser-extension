@@ -14,7 +14,7 @@ init(currentChannel.value)
 
 <template>
     <div class="w-full min-w-[34rem] max-w-[42rem]">
-        <header class="flex w-full items-center bg-[#18181b]" role="tablist">
+        <header class="sticky top-0 flex w-full items-center bg-[#18181b]" role="tablist">
             <button
                 v-for="channel in channels"
                 class="tab-button w-full py-2 text-lg font-bold text-white"
