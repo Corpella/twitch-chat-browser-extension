@@ -65,7 +65,7 @@ init(currentChannel.value)
     </div>
 </template>
 
-<style scoped>
+<style>
 /* width */
 ::-webkit-scrollbar {
     width: 10px;
