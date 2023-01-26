@@ -73,7 +73,8 @@ export const useChatHistory = () => {
     }
 
     const init = async (channel: string) => {
-        !messages[channel]?.length && (state.isLoading = true)
+        const noMessagesAvailable = !messages[channel]?.length
+        noMessagesAvailable && (state.isLoading = true)
         try {
             await getGlobalEmotes()
             await getLocalEmotes(channel)
@@ -84,8 +85,10 @@ export const useChatHistory = () => {
         }
         finally {
             state.isLoading = false
-            nextTick(() => {
-                window.scrollTo(0, document.body.scrollHeight);
+
+            noMessagesAvailable && nextTick(() => {
+                const list = document.getElementById('main')
+                list?.scrollTo({ top: list.scrollHeight })
             })
         }
 

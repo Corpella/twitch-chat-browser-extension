@@ -26,7 +26,7 @@ init(currentChannel.value)
 
 <template>
     <div class="w-full min-w-[34rem] max-w-[42rem]">
-        <header class="sticky top-0 flex w-full items-center bg-[#18181b]" role="tablist">
+        <header class="[h-3.5rem] sticky top-0 flex w-full items-center bg-[#18181b]" role="tablist">
             <button
                 v-for="(channel, index) in channels"
                 class="tab-button w-full py-3 text-lg font-bold text-white"
@@ -41,7 +41,7 @@ init(currentChannel.value)
             </button>
             <span class="slider" />
         </header>
-        <main class="w-full bg-[#342e45] text-lg">
+        <main id="main" class="max-h-[30rem] min-h-[5rem] w-full overflow-y-scroll bg-[#342e45] text-lg">
             <p class="p-5 text-center text-white" v-if="state.isLoading || !currentMessages.length">Loading</p>
             <ul v-else class="flex w-full flex-col gap-2">
                 <li
